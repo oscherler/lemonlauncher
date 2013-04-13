@@ -56,6 +56,8 @@ private:
    SDL_Rect _list_rect;
    SDL_Color _list_color;
    SDL_Color _list_hover_color;
+   SDL_Color _list_emphasis_color;
+   SDL_Color _list_emphasis_hover_color;
    int _list_font_height;
    int _list_item_spacing;
    justify_t _list_justify;

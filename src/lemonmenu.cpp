@@ -40,14 +40,17 @@ using namespace std;
 static Uint32 snap_timer_callback(Uint32 interval, void *param);
 
 /**
- * Function executed for each record returned from games list queries
- */
-int sql_callback(void *obj, int argc, char **argv, char **colname);
-
-/**
  * Asyncronous function for launching a game
  */
 int launch_game(void* data);
+
+struct sqlite_exception { };
+
+template <typename A>
+void assert_sqlite( A assertion )
+{
+   if (!assertion) throw sqlite_exception();
+}
 
 /**
  * Compares the text property of two item pointers and returns true if the left
@@ -98,6 +101,7 @@ void lemon_menu::main_loop()
    const int pgdown_key = g_opts.get_int(KEY_KEYCODE_PGDOWN);
    const int select_key = g_opts.get_int(KEY_KEYCODE_SELECT);
    const int back_key = g_opts.get_int(KEY_KEYCODE_BACK);
+   const int toggle_favorite_key = g_opts.get_int(KEY_KEYCODE_FAVORITE);
    const int alphamod = g_opts.get_int(KEY_KEYCODE_ALPHAMOD);
    const int viewmod = g_opts.get_int(KEY_KEYCODE_VIEWMOD);
 
@@ -121,6 +125,8 @@ void lemon_menu::main_loop()
             handle_activate();
          } else if (key == back_key) {
             handle_up_menu();
+         } else if (key == toggle_favorite_key) {
+            handle_toggle_favorite();
          }
 
          break;
@@ -242,6 +248,51 @@ void lemon_menu::handle_activate()
    }
 }
 
+void lemon_menu::handle_toggle_favorite()
+{
+   item* item = _current->selected();
+   if (typeid(game) != typeid(*item))
+      return;
+   
+   game* g = (game*)item;
+   g->toggle_favorite();
+
+   ll::log << debug << "handle_toggle_favorite: " << g->text() << ": " << g->is_favorite() << endl;
+
+   // create query to toggle game favorite status
+   string query("UPDATE games SET favourite = ? WHERE filename = ?");
+   ll::log << debug << query << endl;
+   
+   sqlite3_stmt *stmt;
+   try {
+      assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
+      assert_sqlite(sqlite3_bind_int(stmt, 1, g->is_favorite()) == SQLITE_OK);
+      assert_sqlite(sqlite3_bind_text(stmt, 2, g->rom(), -1, SQLITE_TRANSIENT) == SQLITE_OK);
+      assert_sqlite(sqlite3_step(stmt) == SQLITE_DONE);
+   } catch (sqlite_exception ex) {
+         const char *errmsg = sqlite3_errmsg(_db);
+         sqlite3_finalize(stmt);
+         throw bad_lemon(errmsg);
+   }
+
+   sqlite3_finalize(stmt);
+
+   // force upate if we're in the favorites menu
+   if(_view == favorite) {
+      // get index of currently selected item
+      int selected = _current->selected_index();
+      
+      change_view(_view);
+      
+      // restore selection
+      _current->select_index(selected);
+
+      reset_snap_timer();
+   }
+   
+   render();
+}
+
 void lemon_menu::handle_run()
 {
    game* g = (game*)_current->selected();
@@ -277,25 +328,21 @@ void lemon_menu::handle_run()
    
    // only increment the games play counter if emulator returned success
    if (exit_code == 0) {
-      
-      // locate games.db file in confdir
-      string db_file("games.db");
-      g_opts.resolve(db_file);
-   
       // create query to update number of times game has been played
-      string query("UPDATE games SET count = count+1 WHERE filename = ");
-      query.append("'").append(g->rom()).append("'");
+      string query("UPDATE games SET count = count+1 WHERE filename = ?");
    
-      char* error_msg = NULL;
-   
+      sqlite3_stmt *stmt;
       try {
-         if (sqlite3_exec(_db, query.c_str(), NULL, NULL, &error_msg)
-               != SQLITE_OK)
-            throw bad_lemon(error_msg);
-      } catch (...) {
-         sqlite3_free(error_msg);
-         throw;
+         assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
+         assert_sqlite(sqlite3_bind_text(stmt, 1, g->rom(), -1, SQLITE_TRANSIENT) == SQLITE_OK);
+         assert_sqlite(sqlite3_step(stmt) == SQLITE_DONE);
+      } catch (sqlite_exception ex) {
+         const char *errmsg = sqlite3_errmsg(_db);
+         sqlite3_finalize(stmt);
+         throw bad_lemon(errmsg);
       }
+
+      sqlite3_finalize(stmt);
    }
 }
 
@@ -344,7 +391,7 @@ void lemon_menu::change_view(view_t view)
    // create new top menu
    _current = _top = new menu(view_names[_view]);
    
-   string query("SELECT filename, name, params, genre FROM games");
+   string query("SELECT filename, name, params, genre, favourite FROM games");
    string where, order;
    
    switch (_view) {
@@ -378,26 +425,36 @@ void lemon_menu::change_view(view_t view)
    
    log << debug << "change_view: " << query.c_str() << endl;
    
-   char* error_msg = NULL;
-
+   sqlite3_stmt *stmt;
+   int rc;
    try {
-      if (sqlite3_exec(_db, query.c_str(), &sql_callback,
-            (void*)this, &error_msg) != SQLITE_OK)
-         throw bad_lemon(error_msg);
-   } catch (...) {
-      sqlite3_free(error_msg);
-      throw;
+      assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
+      while((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+      {
+         insert_game(stmt);
+      }
+      assert_sqlite(rc == SQLITE_DONE);
+   } catch (sqlite_exception ex) {
+         const char *errmsg = sqlite3_errmsg(_db);
+         sqlite3_finalize(stmt);
+         throw bad_lemon(errmsg);
    }
+
+   sqlite3_finalize(stmt);
 }
 
-int sql_callback(void* obj, int argc, char **argv, char **colname)
+void lemon_menu::insert_game(sqlite3_stmt *stmt)
 {
-   lemon_menu* lm = (lemon_menu*)obj;
-   menu* top = lm->top();
+   menu* top = this->top();
    
-   game* g = new game(argv[0], argv[1], argv[2]);
+   game* g = new game(
+      (char *)sqlite3_column_text(stmt, 0), // filename
+      (char *)sqlite3_column_text(stmt, 1), // name
+      (char *)sqlite3_column_text(stmt, 2), // params
+      sqlite3_column_int(stmt, 4)           // favourite
+   );
    
-   switch (lm->view()) {
+   switch (this->view()) {
    case favorite:
    case most_played:
    case all:
@@ -406,10 +463,11 @@ int sql_callback(void* obj, int argc, char **argv, char **colname)
       break;
       
    case genre:
+      char* genre_name = (char *)sqlite3_column_text(stmt, 3);
       menu* m = NULL;
       if (!top->has_children()) {
          // if top menu doesn't have a menu yet, create one for the genre
-         m = new menu(argv[3]);
+         m = new menu(genre_name);
          top->add_child(m);
       } else {
          // get last child of the top level menu
@@ -419,8 +477,8 @@ int sql_callback(void* obj, int argc, char **argv, char **colname)
          m = (menu*)*i;
 
          // create new child menu of the genre strings don't match
-         if (strcmp(m->text(), argv[3]) != 0) {
-            m = new menu(argv[3]);
+         if (strcmp(m->text(), genre_name) != 0) {
+            m = new menu(genre_name);
             top->add_child(m);
          }
       }
@@ -429,8 +487,6 @@ int sql_callback(void* obj, int argc, char **argv, char **colname)
 
       break;
    }
-   
-   return 0;
 }
 
 Uint32 snap_timer_callback(Uint32 interval, void *param)

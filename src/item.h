@@ -68,6 +68,18 @@ public:
          const = 0;
    
    /**
+    * Draws the item and returns the result as a surface
+    * @param font font used for text drawing
+    * @param color color to when drawing item
+    * @param hover_color color to use when drawing selected item
+    * @param emphasis_color color to when drawing an emphasized item
+    * @param emphasis_hover_color color to use when drawing an emphasized selected item
+    * @return newly created surface
+    */
+   virtual SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color)
+         const = 0;
+   
+   /**
     * Generates a snapshot for the item
     * @return newly created surface, or NULL if no snapshot
     */

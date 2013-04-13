@@ -51,9 +51,19 @@ public:
    item* selected()
    { return _children[_selected]; }
    
+   /** Returns currently selected child */
+   int selected_index()
+   { return _selected; }
+   
    /** Returns currently selected child as a bi-directional iterator */
    vector<item*>::iterator selected_begin()
    { return _children.begin()+_selected; }
+
+   /**
+    * Attempts to select the index-th child
+    * @return true if selection has changed
+    */
+   const bool select_index(int index);
 
    /**
     * Attempts to select the child who is 'step' number of children
@@ -107,6 +117,7 @@ public:
    { return _name.c_str(); }
    
    SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color) const;
+   SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color) const;
    
    /* Roland's origional version would iterate through all games in the menu and
     * look for four game snapshots to be placed in a 2x2 grid.  Would be cool if

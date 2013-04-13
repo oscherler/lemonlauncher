@@ -51,6 +51,7 @@ namespace ll {
 #define KEY_KEYCODE_PGDOWN    "pgdown"
 #define KEY_KEYCODE_SELECT    "select"
 #define KEY_KEYCODE_BACK      "back"
+#define KEY_KEYCODE_FAVORITE  "favorite"
 #define KEY_KEYCODE_ALPHAMOD  "alphamod"
 #define KEY_KEYCODE_VIEWMOD   "viewmod"
 
