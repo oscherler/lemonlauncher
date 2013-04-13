@@ -364,7 +364,7 @@ void lemon_menu::change_view(view_t view)
    // create new top menu
    _current = _top = new menu(view_names[_view]);
    
-   string query("SELECT filename, name, params, genre FROM games");
+   string query("SELECT filename, name, params, genre, favourite FROM games");
    string where, order;
    
    switch (_view) {
@@ -411,7 +411,7 @@ int sql_callback(void* obj, int argc, char **argv, char **colname)
    lemon_menu* lm = (lemon_menu*)obj;
    menu* top = lm->top();
    
-   game* g = new game(argv[0], argv[1], argv[2]);
+   game* g = new game(argv[0], argv[1], argv[2], argv[4]); // filename, name, params, favourite
    
    switch (lm->view()) {
    case favorite:

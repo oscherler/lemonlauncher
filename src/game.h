@@ -35,10 +35,11 @@ private:
    string _rom;    // rom name
    string _name;   // game name
    string _params; // game specific mame parameters
+   bool _favorite; // game is in favorites
 
 public:
-   game(const char* rom, const char* name, const char* params) :
-      _rom(rom), _name(name), _params(params != NULL? params : "") { }
+   game(const char* rom, const char* name, const char* params, const char* favorite) :
+      _rom(rom), _name(name), _params(params != NULL? params : ""), _favorite(favorite[0] == '1') { }
 
    virtual ~game() { }
    
@@ -53,6 +54,10 @@ public:
    /** Returns game name as item text */
    const char* text() const
    { return _name.c_str(); }
+   
+   /** Returns game favorite status */
+   const bool is_favorite() const
+   { return _favorite; }
    
    SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color) const;
    SDL_Surface* snapshot();
