@@ -38,8 +38,8 @@ private:
    bool _favorite; // game is in favorites
 
 public:
-   game(const char* rom, const char* name, const char* params, const char* favorite) :
-      _rom(rom), _name(name), _params(params != NULL? params : ""), _favorite(favorite[0] == '1') { }
+   game(const char* rom, const char* name, const char* params, bool favorite) :
+      _rom(rom), _name(name), _params(params != NULL? params : ""), _favorite(favorite) { }
 
    virtual ~game() { }
    

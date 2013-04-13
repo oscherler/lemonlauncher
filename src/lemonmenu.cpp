@@ -40,11 +40,6 @@ using namespace std;
 static Uint32 snap_timer_callback(Uint32 interval, void *param);
 
 /**
- * Function executed for each record returned from games list queries
- */
-int sql_callback(void *obj, int argc, char **argv, char **colname);
-
-/**
  * Asyncronous function for launching a game
  */
 int launch_game(void* data);
@@ -394,26 +389,42 @@ void lemon_menu::change_view(view_t view)
    
    log << debug << "change_view: " << query.c_str() << endl;
    
-   char* error_msg = NULL;
+   sqlite3_stmt *stmt;
+   int rc = sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL);
+   if (rc != SQLITE_OK)
+      throw bad_lemon(sqlite3_errmsg(_db));
 
-   try {
-      if (sqlite3_exec(_db, query.c_str(), &sql_callback,
-            (void*)this, &error_msg) != SQLITE_OK)
-         throw bad_lemon(error_msg);
-   } catch (...) {
-      sqlite3_free(error_msg);
-      throw;
-   }
+   do
+   {
+      rc = sqlite3_step(stmt);
+      if (rc == SQLITE_DONE)
+         break;
+      
+      if (rc != SQLITE_ROW) {
+         string errmsg(sqlite3_errmsg(_db));
+         sqlite3_finalize(stmt);
+         throw bad_lemon(errmsg.c_str());
+      }
+      
+      insert_game(stmt);
+   } while(rc == SQLITE_ROW);
+
+   if (rc == SQLITE_DONE)
+      sqlite3_finalize(stmt);
 }
 
-int sql_callback(void* obj, int argc, char **argv, char **colname)
+void lemon_menu::insert_game(sqlite3_stmt *stmt)
 {
-   lemon_menu* lm = (lemon_menu*)obj;
-   menu* top = lm->top();
+   menu* top = this->top();
    
-   game* g = new game(argv[0], argv[1], argv[2], argv[4]); // filename, name, params, favourite
+   game* g = new game(
+      (char *)sqlite3_column_text(stmt, 0), // filename
+      (char *)sqlite3_column_text(stmt, 1), // name
+      (char *)sqlite3_column_text(stmt, 2), // params
+      sqlite3_column_int(stmt, 4)           // favourite
+   );
    
-   switch (lm->view()) {
+   switch (this->view()) {
    case favorite:
    case most_played:
       top->add_child(g);
@@ -421,10 +432,11 @@ int sql_callback(void* obj, int argc, char **argv, char **colname)
       break;
       
    case genre:
+      char* genre_name = (char *)sqlite3_column_text(stmt, 3);
       menu* m = NULL;
       if (!top->has_children()) {
          // if top menu doesn't have a menu yet, create one for the genre
-         m = new menu(argv[3]);
+         m = new menu(genre_name);
          top->add_child(m);
       } else {
          // get last child of the top level menu
@@ -434,8 +446,8 @@ int sql_callback(void* obj, int argc, char **argv, char **colname)
          m = (menu*)*i;
 
          // create new child menu of the genre strings don't match
-         if (strcmp(m->text(), argv[3]) != 0) {
-            m = new menu(argv[3]);
+         if (strcmp(m->text(), genre_name) != 0) {
+            m = new menu(genre_name);
             top->add_child(m);
          }
       }
@@ -444,8 +456,6 @@ int sql_callback(void* obj, int argc, char **argv, char **colname)
 
       break;
    }
-   
-   return 0;
 }
 
 Uint32 snap_timer_callback(Uint32 interval, void *param)

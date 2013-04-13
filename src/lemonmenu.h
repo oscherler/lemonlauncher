@@ -71,6 +71,8 @@ private:
    void handle_activate();
    void handle_toggle_favorite();
    
+   void insert_game(sqlite3_stmt *stmt);
+
 public:
    lemon_menu(lemonui* ui);
    
