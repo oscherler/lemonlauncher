@@ -407,15 +407,11 @@ void lemon_menu::change_view(view_t view)
    int rc;
    try {
       assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
-
-      do
+      while((rc = sqlite3_step(stmt)) == SQLITE_ROW)
       {
-         rc = sqlite3_step(stmt);
-         assert_sqlite(rc == SQLITE_DONE || rc == SQLITE_ROW);
-
-         if (rc == SQLITE_ROW)
-            insert_game(stmt);
-      } while(rc == SQLITE_ROW);
+         insert_game(stmt);
+      }
+      assert_sqlite(rc == SQLITE_DONE);
    } catch (sqlite_exception ex) {
          const char *errmsg = sqlite3_errmsg(_db);
          sqlite3_finalize(stmt);
