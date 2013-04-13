@@ -404,27 +404,25 @@ void lemon_menu::change_view(view_t view)
    log << debug << "change_view: " << query.c_str() << endl;
    
    sqlite3_stmt *stmt;
-   int rc = sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL);
-   if (rc != SQLITE_OK)
-      throw bad_lemon(sqlite3_errmsg(_db));
+   int rc;
+   try {
+      assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
 
-   do
-   {
-      rc = sqlite3_step(stmt);
-      if (rc == SQLITE_DONE)
-         break;
-      
-      if (rc != SQLITE_ROW) {
-         string errmsg(sqlite3_errmsg(_db));
+      do
+      {
+         rc = sqlite3_step(stmt);
+         assert_sqlite(rc == SQLITE_DONE || rc == SQLITE_ROW);
+
+         if (rc == SQLITE_ROW)
+            insert_game(stmt);
+      } while(rc == SQLITE_ROW);
+   } catch (sqlite_exception ex) {
+         const char *errmsg = sqlite3_errmsg(_db);
          sqlite3_finalize(stmt);
-         throw bad_lemon(errmsg.c_str());
-      }
-      
-      insert_game(stmt);
-   } while(rc == SQLITE_ROW);
+         throw bad_lemon(errmsg);
+   }
 
-   if (rc == SQLITE_DONE)
-      sqlite3_finalize(stmt);
+   sqlite3_finalize(stmt);
 }
 
 void lemon_menu::insert_game(sqlite3_stmt *stmt)
