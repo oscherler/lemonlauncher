@@ -44,6 +44,14 @@ static Uint32 snap_timer_callback(Uint32 interval, void *param);
  */
 int launch_game(void* data);
 
+struct sqlite_exception { };
+
+template <typename A>
+void assert_sqlite( A assertion )
+{
+   if (!assertion) throw sqlite_exception();
+}
+
 /**
  * Compares the text property of two item pointers and returns true if the left
  * is less than the right.
@@ -249,23 +257,22 @@ void lemon_menu::handle_toggle_favorite()
    ll::log << debug << "handle_toggle_favorite: " << g->text() << endl;
 
    // create query to toggle game favorite status
-   string query("UPDATE games SET favourite = ");
-   query.append(g->is_favorite() ? "0" : "1");
-   query.append(" WHERE filename = ");
-   query.append("'").append(g->rom()).append("'");
-
+   string query("UPDATE games SET favourite = ? WHERE filename = ?");
    ll::log << debug << query << endl;
-
-   char* error_msg = NULL;
-
+   
+   sqlite3_stmt *stmt;
    try {
-      if (sqlite3_exec(_db, query.c_str(), NULL, NULL, &error_msg)
-            != SQLITE_OK)
-         throw bad_lemon(error_msg);
-   } catch (...) {
-      sqlite3_free(error_msg);
-      throw;
+      assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
+      assert_sqlite(sqlite3_bind_int(stmt, 1, ! g->is_favorite()) == SQLITE_OK);
+      assert_sqlite(sqlite3_bind_text(stmt, 2, g->rom(), -1, SQLITE_TRANSIENT) == SQLITE_OK);
+      assert_sqlite(sqlite3_step(stmt) == SQLITE_DONE);
+   } catch (sqlite_exception ex) {
+         const char *errmsg = sqlite3_errmsg(_db);
+         sqlite3_finalize(stmt);
+         throw bad_lemon(errmsg);
    }
+
+   sqlite3_finalize(stmt);
 }
 
 void lemon_menu::handle_run()
@@ -303,33 +310,21 @@ void lemon_menu::handle_run()
    
    // only increment the games play counter if emulator returned success
    if (exit_code == 0) {
-      
-      // locate games.db file in confdir
-      string db_file("games.db");
-      g_opts.resolve(db_file);
-   
       // create query to update number of times game has been played
-      string query("UPDATE games SET count = count+1 WHERE filename = ");
-      query.append("'").append(g->rom()).append("'");
+      string query("UPDATE games SET count = count+1 WHERE filename = ?");
    
-      sqlite3* db = NULL;
-      char* error_msg = NULL;
-   
+      sqlite3_stmt *stmt;
       try {
-         if (sqlite3_open(db_file.c_str(), &db))
-            throw bad_lemon(sqlite3_errmsg(db));
-         
-         // execute query and throw exception on error
-         if (sqlite3_exec(db, query.c_str(), NULL, NULL, &error_msg)
-               != SQLITE_OK)
-            throw bad_lemon(error_msg);
-      } catch (...) {
-         sqlite3_free(error_msg);
-         throw;
+         assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
+         assert_sqlite(sqlite3_bind_text(stmt, 1, g->rom(), -1, SQLITE_TRANSIENT) == SQLITE_OK);
+         assert_sqlite(sqlite3_step(stmt) == SQLITE_DONE);
+      } catch (sqlite_exception ex) {
+            const char *errmsg = sqlite3_errmsg(_db);
+            sqlite3_finalize(stmt);
+            throw bad_lemon(errmsg);
       }
-      
-      if (db)
-         sqlite3_close(db);
+
+      sqlite3_finalize(stmt);
    }
 }
 
