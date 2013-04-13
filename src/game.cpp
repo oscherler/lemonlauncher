@@ -50,3 +50,8 @@ SDL_Surface* game::draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color) 
    SDL_Color c = this == ((menu*)parent())->selected()? hover_color : color;
    return TTF_RenderText_Blended(font, text(), c);
 }
+
+SDL_Surface* game::draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color) const
+{
+   return draw( font, is_favorite()? emphasis_color : color, is_favorite()? emphasis_hover_color : hover_color );
+}
