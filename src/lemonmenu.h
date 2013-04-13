@@ -31,9 +31,9 @@
 
 namespace ll {
 
-typedef enum { favorite, most_played, genre } view_t;
+typedef enum { favorite, most_played, genre, all } view_t;
 static const char* view_names[] = {
-      "Favorites", "Most Played", "Genres"
+      "Favorites", "Most Played", "Genres", "All"
 };
 
 class lemon_menu {

@@ -211,7 +211,7 @@ void lemon_menu::handle_alphadown()
 
 void lemon_menu::handle_viewup()
 {
-   if (_view != genre) {
+   if (_view != all) {
       change_view((view_t)(_view+1));
       reset_snap_timer();
       render();
@@ -367,6 +367,10 @@ void lemon_menu::change_view(view_t view)
    case genre:
       order.append("genre,name");
       break;
+      
+   case all:
+      order.append("name");
+      break;
    }
    
    if (!_show_hidden) {
@@ -402,6 +406,7 @@ int sql_callback(void* obj, int argc, char **argv, char **colname)
    switch (lm->view()) {
    case favorite:
    case most_played:
+   case all:
       top->add_child(g);
       
       break;
