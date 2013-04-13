@@ -247,6 +247,25 @@ void lemon_menu::handle_toggle_favorite()
    game* g = (game*)item;
 
    ll::log << debug << "handle_toggle_favorite: " << g->text() << endl;
+
+   // create query to toggle game favorite status
+   string query("UPDATE games SET favourite = ");
+   query.append(g->is_favorite() ? "0" : "1");
+   query.append(" WHERE filename = ");
+   query.append("'").append(g->rom()).append("'");
+
+   ll::log << debug << query << endl;
+
+   char* error_msg = NULL;
+
+   try {
+      if (sqlite3_exec(_db, query.c_str(), NULL, NULL, &error_msg)
+            != SQLITE_OK)
+         throw bad_lemon(error_msg);
+   } catch (...) {
+      sqlite3_free(error_msg);
+      throw;
+   }
 }
 
 void lemon_menu::handle_run()
