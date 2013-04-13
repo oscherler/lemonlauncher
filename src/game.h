@@ -59,6 +59,10 @@ public:
    const bool is_favorite() const
    { return _favorite; }
    
+   /** Returns game favorite status */
+   void toggle_favorite()
+   { _favorite = ! _favorite; }
+   
    SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color) const;
    SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color) const;
    SDL_Surface* snapshot();

@@ -253,8 +253,9 @@ void lemon_menu::handle_toggle_favorite()
       return;
    
    game* g = (game*)item;
+   g->toggle_favorite();
 
-   ll::log << debug << "handle_toggle_favorite: " << g->text() << endl;
+   ll::log << debug << "handle_toggle_favorite: " << g->text() << ": " << g->is_favorite() << endl;
 
    // create query to toggle game favorite status
    string query("UPDATE games SET favourite = ? WHERE filename = ?");
@@ -263,7 +264,7 @@ void lemon_menu::handle_toggle_favorite()
    sqlite3_stmt *stmt;
    try {
       assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
-      assert_sqlite(sqlite3_bind_int(stmt, 1, ! g->is_favorite()) == SQLITE_OK);
+      assert_sqlite(sqlite3_bind_int(stmt, 1, g->is_favorite()) == SQLITE_OK);
       assert_sqlite(sqlite3_bind_text(stmt, 2, g->rom(), -1, SQLITE_TRANSIENT) == SQLITE_OK);
       assert_sqlite(sqlite3_step(stmt) == SQLITE_DONE);
    } catch (sqlite_exception ex) {
@@ -273,6 +274,14 @@ void lemon_menu::handle_toggle_favorite()
    }
 
    sqlite3_finalize(stmt);
+
+   // force upate if we're in the favorites menu
+   if(_view == favorite) {
+      change_view(_view);
+      reset_snap_timer();
+   }
+   
+   render();
 }
 
 void lemon_menu::handle_run()
