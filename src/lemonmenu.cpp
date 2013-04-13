@@ -277,7 +277,14 @@ void lemon_menu::handle_toggle_favorite()
 
    // force upate if we're in the favorites menu
    if(_view == favorite) {
+      // get index of currently selected item
+      int selected = _current->selected_index();
+      
       change_view(_view);
+      
+      // restore selection
+      _current->select_index(selected);
+
       reset_snap_timer();
    }
    

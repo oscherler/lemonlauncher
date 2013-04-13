@@ -51,9 +51,19 @@ public:
    item* selected()
    { return _children[_selected]; }
    
+   /** Returns currently selected child */
+   int selected_index()
+   { return _selected; }
+   
    /** Returns currently selected child as a bi-directional iterator */
    vector<item*>::iterator selected_begin()
    { return _children.begin()+_selected; }
+
+   /**
+    * Attempts to select the index-th child
+    * @return true if selection has changed
+    */
+   const bool select_index(int index);
 
    /**
     * Attempts to select the child who is 'step' number of children

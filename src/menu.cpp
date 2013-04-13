@@ -30,6 +30,19 @@ menu::~menu()
       delete *i;
 }
 
+const bool menu::select_index(int index)
+{
+   if (_children.size() == 0 || _selected == index)
+      return false;
+      
+   int last = _children.size()-1;
+   if (index < 0 ) index = 0;
+   if (index > last ) index = last;
+   
+   _selected = index;
+   return true;
+}
+
 const bool menu::select_next(int step)
 {
    int last = _children.size()-1;
