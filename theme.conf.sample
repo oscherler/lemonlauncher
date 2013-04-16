@@ -43,6 +43,8 @@ list {
    spacing = 4
    color = 0xefefef
    hover_color = 0xffe432
+   favorite_color = 0x94ff8f
+   favorite_hover_color = 0x3dff33
 }
 
 snapshot {

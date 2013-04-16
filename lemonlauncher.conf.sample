@@ -38,6 +38,7 @@ pgdown = 275     # left   p1-left
 
 select = 49      # 1      p1-start
 back = 50        # 2      p2-start
+favorite = 53    # 5      coin1
 
 # these options are not keycodes, they are key modifiers (see SDLMod enum)
 alphamod = 0x0040 # lctrl  p1-btn1
