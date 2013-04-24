@@ -265,7 +265,7 @@ lemonui::~lemonui()
 void lemonui::setup_screen() throw(bad_lemon&)
 {
    // initialize sdl
-   SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER);
+   SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK);
            
    // hide mouse cursor
    SDL_ShowCursor(SDL_DISABLE);
@@ -297,7 +297,11 @@ void lemonui::setup_screen() throw(bad_lemon&)
 
    if (!_buffer)
       throw bad_lemon("layout: unable to create drawing buffer");
-   
+
+   SDL_Joystick *joystick;
+
+   SDL_JoystickEventState(SDL_ENABLE);
+   joystick = SDL_JoystickOpen(0);
 }
 
 void lemonui::destroy_screen()
