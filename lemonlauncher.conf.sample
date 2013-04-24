@@ -36,8 +36,14 @@ down = 274       # down   p1-down
 pgup = 276       # right  p1-right
 pgdown = 275     # left   p1-left
 
+joy_up_down = -2    # joystick 1st axis, reversed
+joy_left_right = 1  # joystick 2nd axis, not reversed
+
 select = 49      # 1      p1-start
 back = 50        # 2      p2-start
+
+joy_select = 1   # joystick button 1
+joy_back = 4     # joystick button 4
 
 # these options are not keycodes, they are key modifiers (see SDLMod enum)
 alphamod = 0x0040 # lctrl  p1-btn1

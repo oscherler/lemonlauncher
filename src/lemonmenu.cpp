@@ -100,6 +100,18 @@ void lemon_menu::main_loop()
    const int back_key = g_opts.get_int(KEY_KEYCODE_BACK);
    const int alphamod = g_opts.get_int(KEY_KEYCODE_ALPHAMOD);
    const int viewmod = g_opts.get_int(KEY_KEYCODE_VIEWMOD);
+   const int x_axis = g_opts.get_int(JOY_AXIS_LEFT_RIGHT);
+   const int y_axis = g_opts.get_int(JOY_AXIS_UP_DOWN);
+   const int joy_select_button = g_opts.get_int(JOY_BUTTON_SELECT);
+   const int joy_back_button = g_opts.get_int(JOY_BUTTON_BACK);
+
+   int x_axis_num = abs(x_axis) - 1;
+   int x_axis_reverse = (x_axis > 0) - (x_axis < 0);
+   int y_axis_num = abs(y_axis) - 1;
+   int y_axis_reverse = (y_axis > 0) - (y_axis < 0);
+   int prev_joy_x = 0;
+   int prev_joy_y = 0;
+   int hyst_out = 16383, hyst_in = 8191;
 
    _running = true;
    while (_running) {
@@ -145,6 +157,51 @@ void lemon_menu::main_loop()
                handle_pgdown();
          }
 
+         break;
+      case SDL_JOYAXISMOTION:
+         // correct value for Xin-Mo Dual Arcade -2..+1 glitch
+         int corrected, reverse;
+         if (event.jaxis.axis == x_axis_num)
+            reverse = x_axis_reverse;
+         else if (event.jaxis.axis == y_axis_num)
+            reverse = y_axis_reverse;
+         
+         if( event.jaxis.value > 16383 )
+            corrected = reverse * 32767;
+         else if( event.jaxis.value < -16384 )
+            corrected = -reverse * 32768;
+         else
+            corrected = 0;
+         
+         if (event.jaxis.axis == y_axis_num) {
+            if (corrected > hyst_out && prev_joy_y != 1) {
+               prev_joy_y = 1;
+               handle_up();
+            } else if (corrected < -hyst_out && prev_joy_y != -1) {
+               prev_joy_y = -1;
+               handle_down();
+            } else if (corrected > -hyst_in && corrected < hyst_in) {
+               prev_joy_y = 0;
+            }
+         } else if (event.jaxis.axis == x_axis_num) {
+            if (corrected > hyst_out && prev_joy_x != 1) {
+               prev_joy_x = 1;
+               handle_viewup();
+            } else if (corrected < -hyst_out && prev_joy_x != -1) {
+               prev_joy_x = -1;
+               handle_viewdown();
+            } else if (corrected > -hyst_in && corrected < hyst_in) {
+               prev_joy_x = 0;
+            }
+         }
+         break;
+      case SDL_JOYBUTTONUP:
+         log << info << event.jbutton.button + 1 << endl;
+         if (event.jbutton.button + 1 == joy_select_button) {
+            handle_activate();
+         } else if (event.jbutton.button + 1 == joy_back_button) {
+            handle_up_menu();
+         }
          break;
       case SDL_USEREVENT:
          if (event.user.code == UPDATE_SNAP_EVENT)

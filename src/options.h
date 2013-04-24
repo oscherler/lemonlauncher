@@ -54,6 +54,12 @@ namespace ll {
 #define KEY_KEYCODE_ALPHAMOD  "alphamod"
 #define KEY_KEYCODE_VIEWMOD   "viewmod"
 
+/* Joystick mapping */
+#define JOY_AXIS_UP_DOWN      "joy_up_down"
+#define JOY_AXIS_LEFT_RIGHT   "joy_left_right"
+#define JOY_BUTTON_SELECT     "joy_select"
+#define JOY_BUTTON_BACK       "joy_back"
+
 /**
  * Class for reading configuration file.  Settings are accessed by passing
  * a key to one of the get_* methods.
