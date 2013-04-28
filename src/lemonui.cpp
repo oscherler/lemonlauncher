@@ -294,10 +294,16 @@ void lemonui::setup_screen() throw(bad_lemon&)
    if (!_buffer)
       throw bad_lemon("layout: unable to create drawing buffer");
 
+   int num_joysticks = SDL_NumJoysticks();
    SDL_Joystick *joystick;
 
+   for (int i = 0; i < num_joysticks; i++ )
+   {
+      joystick = SDL_JoystickOpen(i);
+      log << info << "Found joystick: " << SDL_JoystickName( i ) << endl;
+   }
+
    SDL_JoystickEventState(SDL_ENABLE);
-   joystick = SDL_JoystickOpen(0);
 }
 
 void lemonui::destroy_screen()
