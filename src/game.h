@@ -36,10 +36,11 @@ private:
    string _name;   // game name
    string _params; // game specific mame parameters
    bool _favorite; // game is in favorites
+   bool _broken;   // game is broken
 
 public:
-   game(const char* rom, const char* name, const char* params, bool favorite) :
-      _rom(rom), _name(name), _params(params != NULL? params : ""), _favorite(favorite) { }
+   game(const char* rom, const char* name, const char* params, bool favorite, bool broken) :
+      _rom(rom), _name(name), _params(params != NULL? params : ""), _favorite(favorite), _broken(broken) { }
 
    virtual ~game() { }
    
@@ -59,12 +60,20 @@ public:
    const bool is_favorite() const
    { return _favorite; }
    
-   /** Returns game favorite status */
+   /** Sets game favorite status */
    void toggle_favorite()
    { _favorite = ! _favorite; }
    
+   /** Returns game broken status */
+   const bool is_broken() const
+   { return _broken; }
+   
+   /** Sets game broken status */
+   void set_broken(bool broken)
+   { _broken = broken; }
+   
    SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color) const;
-   SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color) const;
+   SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color, SDL_Color broken_color, SDL_Color broken_hover_color) const;
    SDL_Surface* snapshot();
 };
 

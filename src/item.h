@@ -76,7 +76,7 @@ public:
     * @param emphasis_hover_color color to use when drawing an emphasized selected item
     * @return newly created surface
     */
-   virtual SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color)
+   virtual SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color, SDL_Color broken_color, SDL_Color broken_hover_color)
          const = 0;
    
    /**

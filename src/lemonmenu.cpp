@@ -388,12 +388,13 @@ void lemon_menu::handle_run()
    string query;
    sqlite3_stmt *stmt;
 
-   if (exit_code == 0) {
-      // update number of times game has been played
-      query = string("UPDATE games SET count = count+1 WHERE filename = ?");
-   } else {
+   g->set_broken(exit_code != 0);
+   if (g->is_broken()) {
       // mark game as broken
       query = string("UPDATE games SET broken = 1 WHERE filename = ?");
+   } else {
+      // update number of times game has been played
+      query = string("UPDATE games SET count = count+1, broken = 0 WHERE filename = ?");
    }
    
    try {
@@ -454,7 +455,7 @@ void lemon_menu::change_view(view_t view)
    // create new top menu
    _current = _top = new menu(view_names[_view]);
    
-   string query("SELECT filename, name, params, genre, favourite FROM games");
+   string query("SELECT filename, name, params, genre, favourite, broken FROM games");
    string where, order;
    
    switch (_view) {
@@ -514,7 +515,8 @@ void lemon_menu::insert_game(sqlite3_stmt *stmt)
       (char *)sqlite3_column_text(stmt, 0), // filename
       (char *)sqlite3_column_text(stmt, 1), // name
       (char *)sqlite3_column_text(stmt, 2), // params
-      sqlite3_column_int(stmt, 4)           // favourite
+      sqlite3_column_int(stmt, 4),          // favourite
+      sqlite3_column_int(stmt, 5)           // broken
    );
    
    switch (this->view()) {

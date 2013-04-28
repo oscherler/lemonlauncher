@@ -123,6 +123,8 @@ lemonui::lemonui(const char* theme_file):
       CFG_INT("hover_color", 0x32E4ff, CFGF_NONE),  // HSB 188, 80, 100
       CFG_INT("favorite_color", 0x94ff8f, CFGF_NONE), // HSB 117, 44, 100
       CFG_INT("favorite_hover_color", 0x3dff33, CFGF_NONE), // HSB 117, 80, 100
+      CFG_INT("broken_color", 0xfda1a3, CFGF_NONE), // HSB 0, 30, 100
+      CFG_INT("broken_hover_color", 0xfc4d54, CFGF_NONE), // HSB 117, 60, 100
       CFG_END()
    };
    
@@ -200,6 +202,8 @@ lemonui::lemonui(const char* theme_file):
    _list_hover_color = RGB_SDL_Color(cfg_getint(list, "hover_color"));
    _list_emphasis_color = RGB_SDL_Color(cfg_getint(list, "favorite_color"));
    _list_emphasis_hover_color = RGB_SDL_Color(cfg_getint(list, "favorite_hover_color"));
+   _list_broken_color = RGB_SDL_Color(cfg_getint(list, "broken_color"));
+   _list_broken_hover_color = RGB_SDL_Color(cfg_getint(list, "broken_hover_color"));
    
    cfg_t* snapshot = cfg_getsec(cfg, "snapshot");
    
@@ -343,7 +347,7 @@ void lemonui::normalize(const char* path, string& new_path)
 
 void lemonui::render_item(SDL_Surface* buffer, item* i, int yoff)
 {
-   SDL_Surface* surface = i->draw(_list_font, _list_color, _list_hover_color, _list_emphasis_color, _list_emphasis_hover_color);
+   SDL_Surface* surface = i->draw(_list_font, _list_color, _list_hover_color, _list_emphasis_color, _list_emphasis_hover_color, _list_broken_color, _list_broken_hover_color);
    
    SDL_Rect src, dest;
 

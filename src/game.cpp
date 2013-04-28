@@ -47,11 +47,22 @@ SDL_Surface* game::snapshot()
 
 SDL_Surface* game::draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color) const
 {
-   SDL_Color c = this == ((menu*)parent())->selected()? hover_color : color;
-   return TTF_RenderText_Blended(font, text(), c);
+   return draw( font, color, hover_color, color, hover_color, color, hover_color );
 }
 
-SDL_Surface* game::draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color) const
+// this method is getting ridiculous. TODO: pass it a 2D array of colors
+SDL_Surface* game::draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color, SDL_Color broken_color, SDL_Color broken_hover_color) const
 {
-   return draw( font, is_favorite()? emphasis_color : color, is_favorite()? emphasis_hover_color : hover_color );
+   bool selected = (this == ((menu*)parent())->selected());
+   SDL_Color c;
+   
+   if (is_broken()) {
+      c = selected ? broken_hover_color : broken_color;
+   } else if (is_favorite()) {
+      c = selected ? emphasis_hover_color : emphasis_color;
+   } else {
+      c = selected ? hover_color : color;
+   }
+      
+   return TTF_RenderText_Blended(font, text(), c);
 }

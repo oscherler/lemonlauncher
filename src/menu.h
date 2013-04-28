@@ -117,7 +117,7 @@ public:
    { return _name.c_str(); }
    
    SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color) const;
-   SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color) const;
+   SDL_Surface* draw(TTF_Font* font, SDL_Color color, SDL_Color hover_color, SDL_Color emphasis_color, SDL_Color emphasis_hover_color, SDL_Color broken_color, SDL_Color broken_hover_color) const;
    
    /* Roland's origional version would iterate through all games in the menu and
     * look for four game snapshots to be placed in a 2x2 grid.  Would be cool if
