@@ -383,24 +383,30 @@ void lemon_menu::handle_run()
    _layout->setup_screen();
    render();
    
-   // only increment the games play counter if emulator returned success
-   if (exit_code == 0) {
-      // create query to update number of times game has been played
-      string query("UPDATE games SET count = count+1 WHERE filename = ?");
-   
-      sqlite3_stmt *stmt;
-      try {
-         assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
-         assert_sqlite(sqlite3_bind_text(stmt, 1, g->rom(), -1, SQLITE_TRANSIENT) == SQLITE_OK);
-         assert_sqlite(sqlite3_step(stmt) == SQLITE_DONE);
-      } catch (sqlite_exception ex) {
-         const char *errmsg = sqlite3_errmsg(_db);
-         sqlite3_finalize(stmt);
-         throw bad_lemon(errmsg);
-      }
+   // increment the games play counter if emulator returned success
+   // mark the game as broken otherwise
+   string query;
+   sqlite3_stmt *stmt;
 
-      sqlite3_finalize(stmt);
+   if (exit_code == 0) {
+      // update number of times game has been played
+      query = string("UPDATE games SET count = count+1 WHERE filename = ?");
+   } else {
+      // mark game as broken
+      query = string("UPDATE games SET broken = 1 WHERE filename = ?");
    }
+   
+   try {
+      assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
+      assert_sqlite(sqlite3_bind_text(stmt, 1, g->rom(), -1, SQLITE_TRANSIENT) == SQLITE_OK);
+      assert_sqlite(sqlite3_step(stmt) == SQLITE_DONE);
+   } catch (sqlite_exception ex) {
+      const char *errmsg = sqlite3_errmsg(_db);
+      sqlite3_finalize(stmt);
+      throw bad_lemon(errmsg);
+   }
+
+   sqlite3_finalize(stmt);
 }
 
 void lemon_menu::handle_up_menu()
