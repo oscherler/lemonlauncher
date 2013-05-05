@@ -279,7 +279,7 @@ void lemonui::setup_screen() throw(bad_lemon&)
          (full ? SDL_FULLSCREEN : 0));
    
    if (!_screen)
-      throw bad_lemon("layou: unable to open screen");
+      throw bad_lemon("layout: unable to open screen");
    
    /*
     * Should I be using hardware surface?  Most docs/guides suggest no..
