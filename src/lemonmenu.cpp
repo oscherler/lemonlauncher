@@ -30,6 +30,7 @@
 #include <SDL/SDL_rotozoom.h>
 
 #define UPDATE_SNAP_EVENT 1
+#define JOYSTICK_REPEAT_EVENT 2
 
 using namespace ll;
 using namespace std;
@@ -38,6 +39,11 @@ using namespace std;
  * Function executed after a timeout for finding snapshot images
  */
 static Uint32 snap_timer_callback(Uint32 interval, void *param);
+
+/**
+ * Function executed to repeat joystick input
+ */
+static Uint32 joystick_repeat_timer_callback(Uint32 interval, void *param);
 
 /**
  * Asyncronous function for launching a game
@@ -61,7 +67,8 @@ bool cmp_item(item* left, item* right)
 
 lemon_menu::lemon_menu(lemonui* ui) :
    _db(NULL), _top(NULL), _current(NULL), _show_hidden(false),
-   _snap_timer(0), _snap_delay(g_opts.get_int(KEY_SNAPSHOT_DELAY))
+   _snap_timer(0), _snap_delay(g_opts.get_int(KEY_SNAPSHOT_DELAY)),
+   _joystick_repeat_delay(250), _joystick_repeat_period(50)
 {
    // locate games.db file in confdir
    string db_file("games.db");
@@ -72,6 +79,18 @@ lemon_menu::lemon_menu(lemonui* ui) :
    
    _layout = ui;
    change_view(favorite);
+   
+   // axis, direction, delay, period, timer
+   _joystick_repeat_config_x = (joystick_repeat_config) {
+      0, 0,
+      _joystick_repeat_delay, _joystick_repeat_period,
+      0
+   };
+   _joystick_repeat_config_y = (joystick_repeat_config) {
+      0, 0,
+      _joystick_repeat_delay, _joystick_repeat_period,
+      0
+   };
 }
 
 lemon_menu::~lemon_menu()
@@ -116,6 +135,9 @@ void lemon_menu::main_loop()
    int prev_joy_x = 0;
    int prev_joy_y = 0;
    int hyst_out = 16383, hyst_in = 8191;
+
+   _joystick_repeat_config_x.axis = x_axis_num;
+   _joystick_repeat_config_y.axis = y_axis_num;
 
    _running = true;
    while (_running) {
@@ -181,23 +203,43 @@ void lemon_menu::main_loop()
          
          if (event.jaxis.axis == y_axis_num) {
             if (corrected > hyst_out && prev_joy_y != 1) {
+               // joystick moved up
                prev_joy_y = 1;
                handle_up();
+
+               _joystick_repeat_config_y.direction = 1;
+               start_joystick_repeat_timer(&_joystick_repeat_config_y);
             } else if (corrected < -hyst_out && prev_joy_y != -1) {
+               // joystick moved down
                prev_joy_y = -1;
                handle_down();
+
+               _joystick_repeat_config_y.direction = -1;
+               start_joystick_repeat_timer(&_joystick_repeat_config_y);
             } else if (corrected > -hyst_in && corrected < hyst_in) {
+               // joystick moved back to the center (vertically)
                prev_joy_y = 0;
+               stop_joystick_repeat_timer(&_joystick_repeat_config_y);
             }
          } else if (event.jaxis.axis == x_axis_num) {
             if (corrected > hyst_out && prev_joy_x != 1) {
+               // joystick moved to the left
                prev_joy_x = 1;
                handle_viewup();
+
+               _joystick_repeat_config_x.direction = 1;
+               start_joystick_repeat_timer(&_joystick_repeat_config_x);
             } else if (corrected < -hyst_out && prev_joy_x != -1) {
+               // joystick moved to the right
                prev_joy_x = -1;
                handle_viewdown();
+
+               _joystick_repeat_config_x.direction = -1;
+               start_joystick_repeat_timer(&_joystick_repeat_config_x);
             } else if (corrected > -hyst_in && corrected < hyst_in) {
+               // joystick moved back to the center (horizontally)
                prev_joy_x = 0;
+               stop_joystick_repeat_timer(&_joystick_repeat_config_x);
             }
          }
          break;
@@ -210,8 +252,23 @@ void lemon_menu::main_loop()
          }
          break;
       case SDL_USEREVENT:
-         if (event.user.code == UPDATE_SNAP_EVENT)
+         if (event.user.code == UPDATE_SNAP_EVENT) {
             update_snap();
+         } else if (event.user.code == JOYSTICK_REPEAT_EVENT) {
+            joystick_repeat_config *config = (joystick_repeat_config *) event.user.data1;
+            // log << info << "repeat: " << config->axis << " " << config->direction << endl;
+            if (config->axis == x_axis_num) {
+               if (config->direction == 1)
+                  handle_viewup();
+               else if (config->direction == -1)
+                  handle_viewdown();
+            } else if (config->axis == y_axis_num) {
+               if (config->direction == 1)
+                  handle_up();
+               else if (config->direction == -1)
+                  handle_down();
+            }
+         }
 
          break;
       }
@@ -444,6 +501,18 @@ void lemon_menu::reset_snap_timer()
    _snap_timer = SDL_AddTimer(_snap_delay, snap_timer_callback, NULL);
 }
 
+void lemon_menu::start_joystick_repeat_timer(joystick_repeat_config *config)
+{
+   // schedule timer to run
+   config->timer = SDL_AddTimer(config->delay, joystick_repeat_timer_callback, config);
+}
+
+void lemon_menu::stop_joystick_repeat_timer(joystick_repeat_config *config)
+{
+   if (config->timer)
+      SDL_RemoveTimer(config->timer);
+}
+
 void lemon_menu::change_view(view_t view)
 {
    _view = view;
@@ -563,4 +632,17 @@ Uint32 snap_timer_callback(Uint32 interval, void *param)
    SDL_PushEvent(&evt);
 
    return 0;
+}
+
+Uint32 joystick_repeat_timer_callback(Uint32 interval, void *param)
+{
+   SDL_Event evt;
+   evt.type = SDL_USEREVENT;
+   evt.user.code = JOYSTICK_REPEAT_EVENT;
+   evt.user.data1 = param;
+
+   SDL_PushEvent(&evt);
+
+   // continue firing the timer at the rate given in the config
+   return ((joystick_repeat_config *) param)->period;
 }

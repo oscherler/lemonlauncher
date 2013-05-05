@@ -287,7 +287,7 @@ void lemonui::setup_screen() throw(bad_lemon&)
          (full ? SDL_FULLSCREEN : 0));
    
    if (!_screen)
-      throw bad_lemon("layou: unable to open screen");
+      throw bad_lemon("layout: unable to open screen");
    
    /*
     * Should I be using hardware surface?  Most docs/guides suggest no..
@@ -302,10 +302,16 @@ void lemonui::setup_screen() throw(bad_lemon&)
    if (!_buffer)
       throw bad_lemon("layout: unable to create drawing buffer");
 
+   int num_joysticks = SDL_NumJoysticks();
    SDL_Joystick *joystick;
 
+   for (int i = 0; i < num_joysticks; i++ )
+   {
+      joystick = SDL_JoystickOpen(i);
+      log << info << "Found joystick: " << SDL_JoystickName( i ) << endl;
+   }
+
    SDL_JoystickEventState(SDL_ENABLE);
-   joystick = SDL_JoystickOpen(0);
 }
 
 void lemonui::destroy_screen()

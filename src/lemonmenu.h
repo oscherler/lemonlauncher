@@ -36,6 +36,15 @@ static const char* view_names[] = {
       "Favorites", "Most Played", "Genres", "All"
 };
 
+// struct to hold joystick axis repeat data
+typedef struct {
+	int axis;
+	int direction;
+	int delay;
+	int period;
+	SDL_TimerID timer;
+} joystick_repeat_config;
+
 class lemon_menu {
 private:
    sqlite3* _db;
@@ -50,11 +59,17 @@ private:
    
    const int _snap_delay;
    SDL_TimerID  _snap_timer;
+   const int _joystick_repeat_delay;
+   const int _joystick_repeat_period;
+   joystick_repeat_config _joystick_repeat_config_x;
+   joystick_repeat_config _joystick_repeat_config_y;
 
    void render();
 
    void reset_snap_timer();
    void update_snap();
+   void start_joystick_repeat_timer(joystick_repeat_config *config);
+   void stop_joystick_repeat_timer(joystick_repeat_config *config);
    void change_view(view_t view);
 
    void handle_up();
