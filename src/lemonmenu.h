@@ -68,7 +68,7 @@ private:
 
    void reset_snap_timer();
    void update_snap();
-   void start_joystick_repeat_timer(joystick_repeat_config *config);
+   void start_joystick_repeat_timer(joystick_repeat_config *config, bool repeating);
    void stop_joystick_repeat_timer(joystick_repeat_config *config);
    void change_view(view_t view);
 
