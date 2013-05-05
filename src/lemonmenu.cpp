@@ -208,14 +208,14 @@ void lemon_menu::main_loop()
                handle_up();
 
                _joystick_repeat_config_y.direction = 1;
-               start_joystick_repeat_timer(&_joystick_repeat_config_y);
+               start_joystick_repeat_timer(&_joystick_repeat_config_y, false);
             } else if (corrected < -hyst_out && prev_joy_y != -1) {
                // joystick moved down
                prev_joy_y = -1;
                handle_down();
 
                _joystick_repeat_config_y.direction = -1;
-               start_joystick_repeat_timer(&_joystick_repeat_config_y);
+               start_joystick_repeat_timer(&_joystick_repeat_config_y, false);
             } else if (corrected > -hyst_in && corrected < hyst_in) {
                // joystick moved back to the center (vertically)
                prev_joy_y = 0;
@@ -228,14 +228,14 @@ void lemon_menu::main_loop()
                handle_viewup();
 
                _joystick_repeat_config_x.direction = 1;
-               start_joystick_repeat_timer(&_joystick_repeat_config_x);
+               start_joystick_repeat_timer(&_joystick_repeat_config_x, false);
             } else if (corrected < -hyst_out && prev_joy_x != -1) {
                // joystick moved to the right
                prev_joy_x = -1;
                handle_viewdown();
 
                _joystick_repeat_config_x.direction = -1;
-               start_joystick_repeat_timer(&_joystick_repeat_config_x);
+               start_joystick_repeat_timer(&_joystick_repeat_config_x, false);
             } else if (corrected > -hyst_in && corrected < hyst_in) {
                // joystick moved back to the center (horizontally)
                prev_joy_x = 0;
@@ -262,11 +262,13 @@ void lemon_menu::main_loop()
                   handle_viewup();
                else if (config->direction == -1)
                   handle_viewdown();
+               start_joystick_repeat_timer(&_joystick_repeat_config_x, true);
             } else if (config->axis == y_axis_num) {
                if (config->direction == 1)
                   handle_up();
                else if (config->direction == -1)
                   handle_down();
+               start_joystick_repeat_timer(&_joystick_repeat_config_y, true);
             }
          }
 
@@ -501,10 +503,10 @@ void lemon_menu::reset_snap_timer()
    _snap_timer = SDL_AddTimer(_snap_delay, snap_timer_callback, NULL);
 }
 
-void lemon_menu::start_joystick_repeat_timer(joystick_repeat_config *config)
+void lemon_menu::start_joystick_repeat_timer(joystick_repeat_config *config, bool repeating)
 {
    // schedule timer to run
-   config->timer = SDL_AddTimer(config->delay, joystick_repeat_timer_callback, config);
+   config->timer = SDL_AddTimer(repeating ? config->period : config->delay, joystick_repeat_timer_callback, config);
 }
 
 void lemon_menu::stop_joystick_repeat_timer(joystick_repeat_config *config)
@@ -644,5 +646,5 @@ Uint32 joystick_repeat_timer_callback(Uint32 interval, void *param)
    SDL_PushEvent(&evt);
 
    // continue firing the timer at the rate given in the config
-   return ((joystick_repeat_config *) param)->period;
+   return 0;
 }
