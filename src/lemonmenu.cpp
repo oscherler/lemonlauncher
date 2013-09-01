@@ -19,6 +19,7 @@
  */
 #include "lemonmenu.h"
 #include "game.h"
+#include "state.h"
 #include "options.h"
 #include "error.h"
 
@@ -72,11 +73,19 @@ lemon_menu::lemon_menu(lemonui* ui) :
    
    _layout = ui;
    change_view(favorite);
+   
+   _game_state = new menu("State");
+   state *s;
+   s = new state("Favorite");
+   _game_state->add_child(s);
+   s = new state("Broken");
+   _game_state->add_child(s);
 }
 
 lemon_menu::~lemon_menu()
 {
    delete _top; // delete top menu will propigate to children
+   delete _game_state;
    
    if (_db)
       sqlite3_close(_db);
@@ -302,10 +311,21 @@ void lemon_menu::handle_activate()
       handle_down_menu();
    } else if (typeid(game) == typeid(*item)) {
       handle_run();
+   } else if (typeid(state) == typeid(*item)) {
+      log << info << "activate state" << endl;
+      _current = _game_state_return;
+      render();
    }
 }
 
 void lemon_menu::handle_toggle_favorite()
+{
+   _game_state_return = _current;
+   _current = _game_state;
+   render();
+}
+
+/*
 {
    item* item = _current->selected();
    if (typeid(game) != typeid(*item))
@@ -348,7 +368,7 @@ void lemon_menu::handle_toggle_favorite()
    }
    
    render();
-}
+}*/
 
 void lemon_menu::handle_run()
 {
@@ -412,7 +432,12 @@ void lemon_menu::handle_run()
 
 void lemon_menu::handle_up_menu()
 {
-   if (_current != _top) {
+   if (_current == _game_state) {
+      log << info << "exit state" << endl;
+      _current = _game_state_return;
+      reset_snap_timer();
+      render();
+   } else if (_current != _top) {
       _current = (menu*)_current->parent();
       reset_snap_timer();
       render();

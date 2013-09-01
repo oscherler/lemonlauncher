@@ -46,6 +46,8 @@ private:
 
    menu* _top;
    menu* _current;
+   menu* _game_state;
+   menu* _game_state_return;
    view_t _view;
    
    const int _snap_delay;
