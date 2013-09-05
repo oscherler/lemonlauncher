@@ -110,7 +110,6 @@ void lemon_menu::main_loop()
    const int pgdown_key = g_opts.get_int(KEY_KEYCODE_PGDOWN);
    const int select_key = g_opts.get_int(KEY_KEYCODE_SELECT);
    const int back_key = g_opts.get_int(KEY_KEYCODE_BACK);
-   const int toggle_favorite_key = g_opts.get_int(KEY_KEYCODE_FAVORITE);
    const int state_menu_key = g_opts.get_int(KEY_KEYCODE_STATE);
    const int alphamod = g_opts.get_int(KEY_KEYCODE_ALPHAMOD);
    const int viewmod = g_opts.get_int(KEY_KEYCODE_VIEWMOD);
@@ -147,9 +146,7 @@ void lemon_menu::main_loop()
             handle_activate();
          } else if (key == back_key) {
             handle_up_menu();
-         } else if (key == toggle_favorite_key) {
-            handle_toggle_favorite();
-	 } else if (key == state_menu_key) {
+         } else if (key == state_menu_key) {
             handle_show_state_menu();
          }
 
@@ -321,7 +318,17 @@ void lemon_menu::handle_activate()
    }
 }
 
-void lemon_menu::handle_toggle_favorite()
+void lemon_menu::handle_show_state_menu()
+{
+   item* item = _current->selected();
+   if (typeid(game) == typeid(*item)) {
+      _game_state_return = _current;
+      _current = _game_state;
+      render();
+   }
+}
+
+/*
 {
    item* item = _current->selected();
    if (typeid(game) != typeid(*item))
@@ -364,17 +371,7 @@ void lemon_menu::handle_toggle_favorite()
    }
    
    render();
-}
-
-void lemon_menu::handle_show_state_menu()
-{
-   item* item = _current->selected();
-   if (typeid(game) == typeid(*item)) {
-      _game_state_return = _current;
-      _current = _game_state;
-      render();
-   }
-}
+}*/
 
 void lemon_menu::handle_run()
 {
