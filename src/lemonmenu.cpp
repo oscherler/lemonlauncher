@@ -111,6 +111,7 @@ void lemon_menu::main_loop()
    const int select_key = g_opts.get_int(KEY_KEYCODE_SELECT);
    const int back_key = g_opts.get_int(KEY_KEYCODE_BACK);
    const int toggle_favorite_key = g_opts.get_int(KEY_KEYCODE_FAVORITE);
+   const int state_menu_key = g_opts.get_int(KEY_KEYCODE_STATE);
    const int alphamod = g_opts.get_int(KEY_KEYCODE_ALPHAMOD);
    const int viewmod = g_opts.get_int(KEY_KEYCODE_VIEWMOD);
    const int x_axis = g_opts.get_int(JOY_AXIS_LEFT_RIGHT);
@@ -148,6 +149,8 @@ void lemon_menu::main_loop()
             handle_up_menu();
          } else if (key == toggle_favorite_key) {
             handle_toggle_favorite();
+	 } else if (key == state_menu_key) {
+            handle_show_state_menu();
          }
 
          break;
@@ -320,13 +323,6 @@ void lemon_menu::handle_activate()
 
 void lemon_menu::handle_toggle_favorite()
 {
-   _game_state_return = _current;
-   _current = _game_state;
-   render();
-}
-
-/*
-{
    item* item = _current->selected();
    if (typeid(game) != typeid(*item))
       return;
@@ -368,7 +364,14 @@ void lemon_menu::handle_toggle_favorite()
    }
    
    render();
-}*/
+}
+
+void lemon_menu::handle_show_state_menu()
+{
+   _game_state_return = _current;
+   _current = _game_state;
+   render();
+}
 
 void lemon_menu::handle_run()
 {

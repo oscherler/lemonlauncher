@@ -72,6 +72,7 @@ private:
    void handle_down_menu();
    void handle_activate();
    void handle_toggle_favorite();
+   void handle_show_state_menu();
    
    void insert_game(sqlite3_stmt *stmt);
 
