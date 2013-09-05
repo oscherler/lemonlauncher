@@ -368,9 +368,12 @@ void lemon_menu::handle_toggle_favorite()
 
 void lemon_menu::handle_show_state_menu()
 {
-   _game_state_return = _current;
-   _current = _game_state;
-   render();
+   item* item = _current->selected();
+   if (typeid(game) == typeid(*item)) {
+      _game_state_return = _current;
+      _current = _game_state;
+      render();
+   }
 }
 
 void lemon_menu::handle_run()
