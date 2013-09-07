@@ -32,14 +32,24 @@ namespace ll {
  */
 class state : public item {
 private:
-   string _name;   // state name
+   int _id;       // state id
+   string _name;  // state name
+/*
+ * maybe add:
+ * colour: to set on games with that state
+ * make menu: true for favourites, false for broken
+ */
 
 public:
-   state(const char* name) :
-      _name(name) { }
+   state(const int id, const char* name) :
+      _id(id), _name(name) { }
 
    virtual ~state() { }
    
+   /** Returns the state id */
+   const int id() const
+   { return _id; }
+
    /** Returns the state name */
    const char* text() const
    { return _name.c_str(); }

@@ -60,7 +60,7 @@ bool cmp_item(item* left, item* right)
 { return strcmp(left->text(), right->text()) < 0; }
 
 lemon_menu::lemon_menu(lemonui* ui) :
-   _db(NULL), _top(NULL), _current(NULL), _show_hidden(false),
+   _db(NULL), _top(NULL), _current(NULL), _game_state(NULL), _show_hidden(false),
    _snap_timer(0), _snap_delay(g_opts.get_int(KEY_SNAPSHOT_DELAY))
 {
    // locate games.db file in confdir
@@ -73,12 +73,7 @@ lemon_menu::lemon_menu(lemonui* ui) :
    _layout = ui;
    change_view(favorite);
    
-   _game_state = new menu("State");
-   state *s;
-   s = new state("Favorite");
-   _game_state->add_child(s);
-   s = new state("Broken");
-   _game_state->add_child(s);
+   load_states();
 }
 
 lemon_menu::~lemon_menu()
@@ -527,6 +522,42 @@ void lemon_menu::change_view(view_t view)
       while((rc = sqlite3_step(stmt)) == SQLITE_ROW)
       {
          insert_game(stmt);
+      }
+      assert_sqlite(rc == SQLITE_DONE);
+   } catch (sqlite_exception ex) {
+         const char *errmsg = sqlite3_errmsg(_db);
+         sqlite3_finalize(stmt);
+         throw bad_lemon(errmsg);
+   }
+
+   sqlite3_finalize(stmt);
+}
+
+void lemon_menu::load_states()
+{
+   // recursively free game states menu / children
+   if (_game_state != NULL)
+      delete _game_state;
+   
+   // create new game states menu
+   _game_state = new menu("State");
+   
+   string query("SELECT id, name FROM states ORDER BY name ASC");
+   
+   log << debug << "load_states: " << query.c_str() << endl;
+   
+   sqlite3_stmt *stmt;
+   int rc;
+   try {
+      assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
+      while((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+      {
+         state* s = new state(
+            sqlite3_column_int(stmt, 0), // name
+            (char *)sqlite3_column_text(stmt, 1)  // name
+         );
+   
+         _game_state->add_child(s);
       }
       assert_sqlite(rc == SQLITE_DONE);
    } catch (sqlite_exception ex) {

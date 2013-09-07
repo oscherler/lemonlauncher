@@ -60,6 +60,7 @@ private:
    void reset_snap_timer();
    void update_snap();
    void change_view(view_t view);
+   void load_states();
 
    void handle_up();
    void handle_down();
