@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 #include "lemonmenu.h"
-#include "game.h"
 #include "state.h"
 #include "options.h"
 #include "error.h"
@@ -312,29 +311,31 @@ void lemon_menu::handle_activate()
    } else if (typeid(game) == typeid(*item)) {
       handle_run();
    } else if (typeid(state) == typeid(*item)) {
-      log << info << "activate state" << endl;
-      _current = _game_state_return;
-      render();
+      handle_select_state();
    }
 }
 
 void lemon_menu::handle_show_state_menu()
 {
+   // ignore when there aren't any children
+   if (!_current->has_children()) return;
+
    item* item = _current->selected();
    if (typeid(game) == typeid(*item)) {
       _game_state_return = _current;
       _current = _game_state;
+      _state_selection = (game*)item;
       render();
    }
 }
 
-/*
+void lemon_menu::handle_select_state()
 {
    item* item = _current->selected();
-   if (typeid(game) != typeid(*item))
+   if (typeid(state) != typeid(*item))
       return;
    
-   game* g = (game*)item;
+   game* g = _state_selection;
    g->toggle_favorite();
 
    ll::log << debug << "handle_toggle_favorite: " << g->text() << ": " << g->is_favorite() << endl;
@@ -357,6 +358,8 @@ void lemon_menu::handle_show_state_menu()
 
    sqlite3_finalize(stmt);
 
+   _current = _game_state_return;
+
    // force upate if we're in the favorites menu
    if(_view == favorite) {
       // get index of currently selected item
@@ -369,9 +372,9 @@ void lemon_menu::handle_show_state_menu()
 
       reset_snap_timer();
    }
-   
+
    render();
-}*/
+}
 
 void lemon_menu::handle_run()
 {

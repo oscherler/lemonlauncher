@@ -28,6 +28,7 @@
 #include "menu.h"
 #include "options.h"
 #include "log.h"
+#include "game.h"
 
 namespace ll {
 
@@ -48,6 +49,7 @@ private:
    menu* _current;
    menu* _game_state;
    menu* _game_state_return;
+   game* _state_selection;
    view_t _view;
    
    const int _snap_delay;
@@ -72,6 +74,7 @@ private:
    void handle_down_menu();
    void handle_activate();
    void handle_show_state_menu();
+   void handle_select_state();
    
    void insert_game(sqlite3_stmt *stmt);
 
