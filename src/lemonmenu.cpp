@@ -326,23 +326,19 @@ void lemon_menu::handle_show_state_menu()
 
 void lemon_menu::handle_select_state()
 {
-   item* item = _current->selected();
-   if (typeid(state) != typeid(*item))
-      return;
-   
+   state* s = (state *)_current->selected();
    game* g = _state_selection;
-   g->toggle_favorite();
 
    ll::log << debug << "handle_toggle_favorite: " << g->text() << ": " << g->is_favorite() << endl;
 
    // create query to toggle game favorite status
-   string query("UPDATE games SET favourite = ? WHERE filename = ?");
+   string query("UPDATE games SET state_id = ? WHERE filename = ?");
    ll::log << debug << query << endl;
    
    sqlite3_stmt *stmt;
    try {
       assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
-      assert_sqlite(sqlite3_bind_int(stmt, 1, g->is_favorite()) == SQLITE_OK);
+      assert_sqlite(sqlite3_bind_int(stmt, 1, s->id()) == SQLITE_OK);
       assert_sqlite(sqlite3_bind_text(stmt, 2, g->rom(), -1, SQLITE_TRANSIENT) == SQLITE_OK);
       assert_sqlite(sqlite3_step(stmt) == SQLITE_DONE);
    } catch (sqlite_exception ex) {
