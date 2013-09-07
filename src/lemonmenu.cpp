@@ -338,7 +338,10 @@ void lemon_menu::handle_select_state()
    sqlite3_stmt *stmt;
    try {
       assert_sqlite(sqlite3_prepare_v2(_db, query.c_str(), -1, &stmt, NULL) == SQLITE_OK);
-      assert_sqlite(sqlite3_bind_int(stmt, 1, s->id()) == SQLITE_OK);
+	  if (s->id()==0)
+	      assert_sqlite(sqlite3_bind_null(stmt, 1) == SQLITE_OK);
+	  else
+	      assert_sqlite(sqlite3_bind_int(stmt, 1, s->id()) == SQLITE_OK);
       assert_sqlite(sqlite3_bind_text(stmt, 2, g->rom(), -1, SQLITE_TRANSIENT) == SQLITE_OK);
       assert_sqlite(sqlite3_step(stmt) == SQLITE_DONE);
    } catch (sqlite_exception ex) {
@@ -477,13 +480,13 @@ void lemon_menu::change_view(view_t view)
    // create new top menu
    _current = _top = new menu(view_names[_view]);
    
-   string query("SELECT filename, name, params, genre, favourite, broken FROM games");
+   string query("SELECT filename, name, params, genre, favourite, broken, state_id FROM games");
    string where, order;
    
    switch (_view) {
    case favorite:
       order.append("name");
-      where.append("favourite = 1");
+      where.append("state_id = 1");
       break;
       
    case most_played:
@@ -537,7 +540,8 @@ void lemon_menu::load_states()
    
    // create new game states menu
    _game_state = new menu("State");
-   
+   _game_state->add_child(new state(0, "None"));
+
    string query("SELECT id, name FROM states ORDER BY name ASC");
    
    log << debug << "load_states: " << query.c_str() << endl;
@@ -573,8 +577,8 @@ void lemon_menu::insert_game(sqlite3_stmt *stmt)
       (char *)sqlite3_column_text(stmt, 0), // filename
       (char *)sqlite3_column_text(stmt, 1), // name
       (char *)sqlite3_column_text(stmt, 2), // params
-      sqlite3_column_int(stmt, 4),          // favourite
-      sqlite3_column_int(stmt, 5)           // broken
+      sqlite3_column_int(stmt, 6) == 1,     // favourite
+      sqlite3_column_int(stmt, 6) == 2      // broken
    );
    
    switch (this->view()) {
